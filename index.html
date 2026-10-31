@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#070b1a">
+<title>星际拾荒者 · Star Scavenger</title>
+<meta name="description" content="纯前端 H5 街机小游戏：驾驶拾荒船穿越陨石雨，收集能量晶石，连击拿高分。">
+<meta property="og:title" content="星际拾荒者 · Star Scavenger">
+<meta property="og:description" content="驾驶拾荒船穿越陨石雨，收集能量晶石，连击拿高分。">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="stage-wrap" id="wrap">
+  <canvas id="stage" aria-label="游戏画面"></canvas>
+
+  <header class="hud">
+    <div class="hud-group">
+      <span class="hud-label">分数</span>
+      <span class="hud-value" id="uiScore">0</span>
+    </div>
+    <div class="hud-group">
+      <span class="hud-label">最高</span>
+      <span class="hud-value" id="uiBest">0</span>
+    </div>
+    <div class="hud-group" id="uiComboBox">
+      <span class="hud-label">连击</span>
+      <span class="hud-value" id="uiCombo">x1</span>
+    </div>
+    <div class="hud-group">
+      <span class="hud-label">生命</span>
+      <span class="hud-value hud-lives" id="uiLives">♥♥♥</span>
+    </div>
+  </header>
+
+  <button class="sound-btn" id="btnSound" type="button" aria-label="切换音效">♪</button>
+
+  <div class="overlay is-open" id="ovStart">
+    <div class="panel">
+      <p class="kicker">SECTOR 7 · SALVAGE RUN</p>
+      <h1>星际拾荒者</h1>
+      <p class="tagline">穿过陨石雨，把能量晶石带回母港。</p>
+      <ul class="howto">
+        <li><b>鼠标 / 手指</b> 左右移动飞船</li>
+        <li><b>← →</b> 或 <b>A / D</b> 键盘驾驶</li>
+        <li><b>自动开火</b>，击碎陨石，别被撞到</li>
+        <li>连续拾取晶石可叠加连击倍率（最高 x5）</li>
+      </ul>
+      <button class="btn" id="btnStart" type="button">开始拾荒</button>
+      <p class="hint">按空格 / 回车 也可以开始</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="ovPause">
+    <div class="panel panel-sm">
+      <h2>已暂停</h2>
+      <p class="tagline">深空里时间静止，但陨石不会。</p>
+      <div class="btn-row">
+        <button class="btn" id="btnResume" type="button">继续</button>
+        <button class="btn btn-ghost" id="btnQuit" type="button">重新开始</button>
+      </div>
+      <p class="hint">按 P 或 Esc 继续</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="ovOver">
+    <div class="panel">
+      <p class="kicker" id="uiNewBest" hidden>NEW RECORD</p>
+      <h2>拾荒结束</h2>
+      <div class="score-board">
+        <div>
+          <span class="sb-label">本局得分</span>
+          <span class="sb-value" id="uiFinal">0</span>
+        </div>
+        <div>
+          <span class="sb-label">历史最高</span>
+          <span class="sb-value" id="uiFinalBest">0</span>
+        </div>
+      </div>
+      <button class="btn" id="btnRestart" type="button">再来一局</button>
+      <p class="hint">按空格 / 回车 重新开始</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/input.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
