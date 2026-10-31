@@ -3,7 +3,8 @@
 一个**零依赖、零构建**的 H5 街机小游戏：驾驶拾荒船穿越陨石雨，收集能量晶石，连击拿高分。
 纯原生 HTML + CSS + JavaScript（Canvas 2D），放进 GitHub Pages 即可拥有自己的网址。
 
-> 演示地址（替换成你自己的）：`https://<你的用户名>.github.io/star-scavenger/`
+> 线上地址：<https://lijng.github.io/star-scavenger/>
+> 仓库地址：<https://github.com/lijng/star-scavenger>
 
 ---
 
