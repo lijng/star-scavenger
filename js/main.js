@@ -107,15 +107,16 @@
     return false;
   }
 
-  /* 页面加载后自动请求广告（2s / 5s / 9s 各试一次）：
-     平台校验程序往往只是打开游戏、不点任何按钮，
-     自动请求保证它也能观察到广告接入 */
+  /* 页面加载后自动请求广告：首次 2s，之后每 3s 重试一次，最多 6 次（约 17s），
+     一旦成功就停。平台校验程序往往只是打开游戏、不点任何按钮，
+     自动请求保证它也能观察到广告接入。
+     重试是必要的：SDK 自身初始化在慢网络下要 4s 以上，太早请求会落空 */
   var autoTries = 0;
   function autoAd() {
     if (!SC.GM.installed) return; /* 自托管版（无 gameId）不加载广告 */
-    requestAd();
+    if (requestAd()) return;
     autoTries += 1;
-    if (autoTries < 3) global.setTimeout(autoAd, autoTries === 1 ? 3000 : 4000);
+    if (autoTries < 6) global.setTimeout(autoAd, 3000);
   }
   global.setTimeout(autoAd, 2000);
 
