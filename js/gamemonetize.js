@@ -62,7 +62,24 @@
           case 'SDK_GAME_DATA_READY':
             GM.ready = true;
             break;
+
+          /* 广告没拿到（网络不通 / 无填充 / 无用户手势被播放器取消）：
+             通知上层解除冷却，以便在合适时机重试。
+             注意：SDK 实际派发的事件名是 AD_CANCELED 这类短名，
+             控制台里打的 ADVERTISEMENT_LOAD_CANCELED 只是日志标签 */
+          case 'AD_CANCELED':
+          case 'AD_ERROR':
+          case 'AD_SDK_LOAD_ERROR':
+          case 'ADVERTISEMENT_LOAD_ERROR':
+          case 'ADVERTISEMENT_LOAD_CANCELED':
+            if (GM.hook.adError) GM.hook.adError(e);
+            break;
+
           default:
+            /* 兜底：SDK 升级后若改名，任何带 ERROR / CANCEL 的事件仍按失败处理 */
+            if (e && e.name && /error|cancel/i.test(e.name) && GM.hook.adError) {
+              GM.hook.adError(e);
+            }
             break;
         }
       }

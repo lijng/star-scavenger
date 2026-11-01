@@ -61,6 +61,42 @@
   var adWasPlaying = false;
   var adGuard = null;
 
+  /* ---------------- 广告请求统一入口 ---------------- */
+
+  var lastAdRequest = 0;
+  var adRetryBudget = 3; /* 广告失败后的重试预算，防止网络长期不通时无限重试 */
+
+  /* 60 秒冷却去重：避免「加载自动请求 + 首局开始 + 一局结束」短时间连出多条广告；
+     SDK 未就绪导致请求失败时不占用冷却，下次仍可重试 */
+  function requestAd() {
+    var now = Date.now();
+    if (now - lastAdRequest < 60000) return false;
+    if (SC.GM.showBanner()) {
+      lastAdRequest = now;
+      return true;
+    }
+    return false;
+  }
+
+  /* 广告没拿到：解除冷却，稍后重试一次。
+     典型场景——网络/填充失败，或没有用户手势被播放器取消 */
+  function retryAdAfterError() {
+    lastAdRequest = 0;
+    if (adRetryBudget <= 0) return;
+    adRetryBudget -= 1;
+    global.setTimeout(function () { requestAd(); }, 2500);
+  }
+
+  /* 真实用户手势能显著提高广告起播率：无 user activation 时播放器会取消广告。
+     冷却 + 预算双重限制，不会造成广告刷屏 */
+  function onGesture() {
+    if (lastAdRequest !== 0 || adRetryBudget <= 0) return;
+    adRetryBudget -= 1;
+    requestAd();
+  }
+  document.addEventListener('pointerdown', onGesture, true);
+  document.addEventListener('keydown', onGesture, true);
+
   SC.GM.install({
     /* 幂等：SDK 可能同时走 onEvent 和 pauseGame 两条路径，重复调用不能出错 */
     pause: function () {
@@ -88,28 +124,18 @@
       audio.muted = soundMuted;
       if (adWasPlaying) game.setPaused(false);
       adWasPlaying = false;
+    },
+
+    /* 广告加载失败 / 被取消：解除冷却，允许下一次手势或延时重试 */
+    adError: function () {
+      retryAdAfterError();
     }
   });
 
-  /* ---------------- 广告请求统一入口 ---------------- */
+  /* ---------------- 页面加载后自动请求广告 ---------------- */
 
-  var lastAdRequest = 0;
-
-  /* 60 秒冷却去重：避免「加载自动请求 + 首局开始 + 一局结束」短时间连出多条广告；
-     SDK 未就绪导致请求失败时不占用冷却，下次仍可重试 */
-  function requestAd() {
-    var now = Date.now();
-    if (now - lastAdRequest < 60000) return false;
-    if (SC.GM.showBanner()) {
-      lastAdRequest = now;
-      return true;
-    }
-    return false;
-  }
-
-  /* 页面加载后自动请求广告：首次 2s，之后每 3s 重试一次，最多 6 次（约 17s），
-     一旦成功就停。平台校验程序往往只是打开游戏、不点任何按钮，
-     自动请求保证它也能观察到广告接入。
+  /* 首次 2s，之后每 3s 重试一次，最多 6 次（约 17s），一旦成功就停。
+     平台校验程序往往只是打开游戏、不点任何按钮，自动请求保证它也能观察到广告接入。
      重试是必要的：SDK 自身初始化在慢网络下要 4s 以上，太早请求会落空 */
   var autoTries = 0;
   function autoAd() {
