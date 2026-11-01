@@ -48,7 +48,7 @@
       el.newBest.hidden = !r.isNew;
       show(el.ovOver);
       /* 广告放在「一局结束」这个天然断点，不打断正在进行的操作 */
-      global.setTimeout(function () { SC.GM.showBanner(); }, 700);
+      global.setTimeout(function () { requestAd(); }, 700);
     }
   });
 
@@ -91,6 +91,34 @@
     }
   });
 
+  /* ---------------- 广告请求统一入口 ---------------- */
+
+  var lastAdRequest = 0;
+
+  /* 60 秒冷却去重：避免「加载自动请求 + 首局开始 + 一局结束」短时间连出多条广告；
+     SDK 未就绪导致请求失败时不占用冷却，下次仍可重试 */
+  function requestAd() {
+    var now = Date.now();
+    if (now - lastAdRequest < 60000) return false;
+    if (SC.GM.showBanner()) {
+      lastAdRequest = now;
+      return true;
+    }
+    return false;
+  }
+
+  /* 页面加载后自动请求广告（2s / 5s / 9s 各试一次）：
+     平台校验程序往往只是打开游戏、不点任何按钮，
+     自动请求保证它也能观察到广告接入 */
+  var autoTries = 0;
+  function autoAd() {
+    if (!SC.GM.installed) return; /* 自托管版（无 gameId）不加载广告 */
+    requestAd();
+    autoTries += 1;
+    if (autoTries < 3) global.setTimeout(autoAd, autoTries === 1 ? 3000 : 4000);
+  }
+  global.setTimeout(autoAd, 2000);
+
   /* ---------------- 场景切换 ---------------- */
 
   function show(node) { node.classList.add('is-open'); }
@@ -109,12 +137,11 @@
     hideAll();
     game.start();
 
-    /* 首次开局放一条前贴片广告：
-       1) 符合行业惯例（preroll）
-       2) 平台审核打开游戏时必定能看到广告，避免"未观察到广告"导致验证不通过 */
+    /* 首局开始的兜底：若加载后的自动请求都失败（SDK 慢），这里补一次；
+       若刚自动请求过，60 秒冷却会自动挡掉，不会连出两条广告 */
     if (!prerollShown) {
       prerollShown = true;
-      global.setTimeout(function () { SC.GM.showBanner(); }, 500);
+      global.setTimeout(function () { requestAd(); }, 500);
     }
   }
 
