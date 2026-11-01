@@ -28,6 +28,7 @@
 
   var fx = new SC.FX();
   var audio = new SC.Audio();
+  var soundMuted = false;
 
   var game = new SC.Game({
     canvas: canvas,
@@ -46,11 +47,31 @@
       el.finalBest.textContent = String(r.best);
       el.newBest.hidden = !r.isNew;
       show(el.ovOver);
+      /* 广告放在「一局结束」这个天然断点，不打断正在进行的操作 */
+      global.setTimeout(function () { SC.GM.showBanner(); }, 700);
     }
   });
 
   var input = new SC.Input(canvas);
   game.input = input;
+
+  /* ---------------- GameMonetize 广告接入 ---------------- */
+
+  var adWasPlaying = false;
+
+  SC.GM.install({
+    pause: function () {
+      /* 官方硬性要求：视频广告播放期间游戏必须暂停且完全静音 */
+      adWasPlaying = (game.state === 'playing');
+      if (adWasPlaying) game.setPaused(true);
+      audio.muted = true;
+    },
+    resume: function () {
+      audio.muted = soundMuted;
+      if (adWasPlaying) game.setPaused(false);
+      adWasPlaying = false;
+    }
+  });
 
   /* ---------------- 场景切换 ---------------- */
 
@@ -80,9 +101,10 @@
   }
 
   function toggleSound() {
-    audio.muted = !audio.muted;
-    el.btnSound.classList.toggle('muted', audio.muted);
-    el.btnSound.setAttribute('aria-label', audio.muted ? '开启音效' : '关闭音效');
+    soundMuted = !soundMuted;
+    audio.muted = soundMuted;
+    el.btnSound.classList.toggle('muted', soundMuted);
+    el.btnSound.setAttribute('aria-label', soundMuted ? '开启音效' : '关闭音效');
   }
 
   /* ---------------- 输入绑定 ---------------- */

@@ -99,6 +99,63 @@ git push
 
 ---
 
+## 发布到 GameMonetize（广告分成）
+
+GameMonetize 是 H5 游戏发行网络：你上传游戏，它分发给数千家发行商，广告收入 **45% 归开发者**，
+Net30 结算（PayPal / USDT ERC20，最低 $30 起付）。规则允许开发者保留自己的品牌和外部链接。
+
+### 第 1 步：注册开发者账号
+
+<https://gamemonetize.com/joinus> → 选 **Developer**。
+收款信息（PayPal 邮箱或 USDT ERC20 地址）务必填准，这是唯一打款通道。
+
+### 第 2 步：在控制台创建游戏，拿 gameId
+
+**Game Management → My games → Add new game**，填标题、描述、分类、封面，
+保存后会得到一个 **gameId**（一串哈希），复制备用。
+
+### 第 3 步：打包（已自动化）
+
+```bash
+python scripts/build_gm.py --game-id 你的gameId
+```
+
+产出 `dist/star-scavenger-gamemonetize.zip`：
+- 根目录直接是 `index.html`（GameMonetize 的硬性要求，多一层文件夹会被拒）
+- gameId 已自动注入 `js/gm-config.js`
+- 自动校验 index.html 是否在根，不在就报错退出
+
+### 第 4 步：上传 → 验证 → 申请激活
+
+1. **Game Management → My games → 选中游戏 → 把 zip 拖进上传区**
+2. 点 **Verify Game** —— 检测 SDK 是否接对
+3. 点 **REQUEST ACTIVATION** 提交审核
+4. 通过后游戏进入目录，发行商即可抓取分发
+
+### SDK 接入说明
+
+| 位置 | 作用 |
+|---|---|
+| `js/gm-config.js` | 存放 gameId，打包时注入 |
+| `js/gamemonetize.js` | 加载 `https://api.gamemonetize.com/sdk.js`，处理事件 |
+| `js/main.js` | 注册 pause/resume 钩子，一局结束时调 `showBanner()` |
+
+关键约束（官方硬性要求，违反会被拒审）：
+
+- 收到 `SDK_GAME_PAUSE` 必须**暂停游戏并静音**——广告播放期间有游戏声音是违规的
+- 收到 `SDK_GAME_START` 才恢复
+- `gameId` 为空时**完全不加载 SDK**，所以 GitHub Pages 自托管版本保持纯净
+
+### 提交前自查
+
+- [ ] zip 根目录有 `index.html`
+- [ ] 手机端可玩、无横向滚动条
+- [ ] 广告期间确实静音（切到后台再回来不会漏音）
+- [ ] 标题 / 描述 / 分类 / 封面齐全
+- [ ] 游戏内素材无版权争议
+
+---
+
 ## 目录结构
 
 ```
@@ -106,15 +163,18 @@ h5game/
 ├── index.html                 # 页面骨架 + HUD + 三块覆盖层（开始/暂停/结束）
 ├── css/style.css              # 全部样式，深空配色
 ├── js/
+│   ├── gm-config.js           # GameMonetize gameId（打包时注入，留空=不加载 SDK）
 │   ├── storage.js             # 最高分持久化（localStorage 容错）
 │   ├── audio.js               # WebAudio 现场合成音效，无音频文件
 │   ├── input.js               # Pointer Events + 键盘统一输入
 │   ├── fx.js                  # 粒子 / 屏幕震动 / 闪屏
 │   ├── game.js                # 核心：实体、碰撞、难度曲线、渲染
+│   ├── gamemonetize.js        # 广告 SDK 适配层（pause/resume/showBanner）
 │   └── main.js                # 启动：画布自适应、场景切换、主循环
 ├── assets/favicon.svg
 ├── .github/workflows/deploy.yml
 ├── scripts/publish.sh|.ps1    # 一键建仓库 + 推送 + 开启 Pages
+├── scripts/build_gm.py        # 打包 GameMonetize 提交用 zip
 └── README.md
 ```
 
