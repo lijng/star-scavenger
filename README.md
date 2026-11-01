@@ -116,6 +116,24 @@ Net30 结算（PayPal / USDT ERC20，最低 $30 起付）。规则允许开发�
 
 ### 第 3 步：打包（已自动化）
 
+**一键（推荐）** —— 打包 + 打开上传页 + 打开产物目录：
+
+```powershell
+# Windows
+.\scripts\oneclick.ps1              # 用 gm-game-id.txt 里的 ID
+.\scripts\oneclick.ps1 -Shots       # 顺便重新生成三张 JPG
+```
+
+```bash
+# macOS / Linux / Git Bash
+bash scripts/oneclick.sh            # 用 gm-game-id.txt 里的 ID
+bash scripts/oneclick.sh --shots    # 顺便重新生成三张 JPG
+```
+
+> 第一次用，把 gameId 写进项目根目录的 `gm-game-id.txt`（该文件已 gitignore，不会进仓库）。
+
+**手动** —— 只打包：
+
 ```bash
 python scripts/build_gm.py --game-id 你的gameId
 ```
