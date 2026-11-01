@@ -57,16 +57,22 @@
 
   /* ---------------- GameMonetize 广告接入 ---------------- */
 
+  var adActive = false;
   var adWasPlaying = false;
 
   SC.GM.install({
+    /* 幂等：SDK 可能同时走 onEvent 和 pauseGame 两条路径，重复调用不能出错 */
     pause: function () {
+      if (adActive) return;
+      adActive = true;
       /* 官方硬性要求：视频广告播放期间游戏必须暂停且完全静音 */
       adWasPlaying = (game.state === 'playing');
       if (adWasPlaying) game.setPaused(true);
       audio.muted = true;
     },
     resume: function () {
+      if (!adActive) return;
+      adActive = false;
       audio.muted = soundMuted;
       if (adWasPlaying) game.setPaused(false);
       adWasPlaying = false;
@@ -172,4 +178,9 @@
 
   resize();
   global.requestAnimationFrame(frame);
+
+  /* 测试用把手：仅当外部显式打开 __SC_TEST__ 时暴露，生产环境不存在 */
+  if (global.__SC_TEST__) {
+    global.__SC_APP__ = { game: game, audio: audio, el: el, gm: SC.GM };
+  }
 })(window);

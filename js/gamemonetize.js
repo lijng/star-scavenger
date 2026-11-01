@@ -30,6 +30,24 @@
 
     global.SDK_OPTIONS = {
       gameId: GM.gameId,
+
+      /* SDK 内部还会直接调这两个回调（不只是发 onEvent），一并接上 */
+      pauseGame: function () {
+        if (GM.hook.pause) GM.hook.pause();
+      },
+      resumeGame: function () {
+        if (GM.hook.resume) GM.hook.resume();
+      },
+
+      onInit: function () {
+        GM.ready = true;
+      },
+
+      /* 广告加载失败绝不能连累游戏 */
+      onError: function () {
+        GM.ready = false;
+      },
+
       onEvent: function (e) {
         switch (e && e.name) {
           case 'SDK_GAME_PAUSE':
@@ -41,6 +59,7 @@
             if (GM.hook.resume) GM.hook.resume();
             break;
           case 'SDK_READY':
+          case 'SDK_GAME_DATA_READY':
             GM.ready = true;
             break;
           default:
